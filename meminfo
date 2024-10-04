@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# meminfo: output content of the file /proc/meminfo in more readable format.
+
+FILE=/proc/meminfo
+TMP_FILE=/tmp/temp_meminfo
+GREEN='\033[1;32m'
+BLUE='\033[1;34m'
+RESETD='\033[0m'
+
+function make_readable {
+	local given_amount=$1
+	kb_remainder=$(( given_amount % 1024 ))
+	mb_amount=$(( given_amount / 1024 ))
+	mb_remainder=$(( mb_amount % 1024 ))
+	gb_amount=$(( mb_amount / 1024))
+	total_amount="${GREEN}${gb_amount}Gb${RESETD}${BLUE}${mb_remainder}Mb${RESETD}${kb_remainder}kB"
+	end_amount=${total_amount/0Gb/}
+	echo -e $end_amount
+}
+
+touch "$TMP_FILE"
+if [ -r "$FILE" ]; then
+	while read memory amount unit; do
+		read_amount=$(make_readable amount)
+		printf "%s\t%s\n" "$memory" "$read_amount" >> "$TMP_FILE"
+	done < "$FILE"
+else
+	echo "$FILE does not exist or not readable"
+	exit 1
+fi
+cat $TMP_FILE | column -t
+rm $TMP_FILE
+
+exit
+
+
